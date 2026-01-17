@@ -45,32 +45,6 @@ make run
 6. Press `Ctrl+L` to list all notes
 7. Use arrow keys to navigate and `Enter` to open a note
 
-## Project Structure
-
-The codebase is organized into separate files for better maintainability:
-
-```
-term-note/
-├── main.go          # Application entry point
-├── config.go        # Configuration and vault directory setup
-├── model.go         # Bubble Tea model and state management
-├── update.go        # Event handling and state updates
-├── view.go          # UI rendering and styles
-├── files.go         # File operations (listing, reading)
-├── Makefile         # Build automation
-├── go.mod           # Go module dependencies
-└── README.md        # This file
-```
-
-### File Descriptions
-
-- **main.go**: Minimal entry point that initializes and runs the Bubble Tea program
-- **config.go**: Handles configuration initialization, sets up the `~/.termnote` vault directory
-- **model.go**: Defines the application state struct, initializes UI components (text input, textarea, file list)
-- **update.go**: Contains all the event handling logic for keyboard shortcuts and state transitions
-- **view.go**: Renders the UI based on current state (welcome screen, file input, editor, file list)
-- **files.go**: Utility functions for file operations like listing notes from the vault directory
-
 ## Data Storage
 
 All notes are stored in `~/.termnote/` as markdown files with the `.md` extension.
@@ -80,8 +54,6 @@ All notes are stored in `~/.termnote/` as markdown files with the `.md` extensio
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - TUI framework
 - [Bubbles](https://github.com/charmbracelet/bubbles) - TUI components
 - [Lipgloss](https://github.com/charmbracelet/lipgloss) - Style definitions
-
-## Development
 
 ### Building
 
@@ -108,8 +80,3 @@ The application follows the Elm Architecture pattern via Bubble Tea:
 1. **Model**: Holds the application state
 2. **Update**: Handles messages and updates the model
 3. **View**: Renders the current state
-
-This separation of concerns makes the code:
-- Easy to test
-- Simple to extend with new features
-- Clear to understand and maintain
