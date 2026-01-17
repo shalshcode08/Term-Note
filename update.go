@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,6 +24,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+n":
 			m.createFileInputVisible = true
+			m.statusMessage = ""
+			m.statusType = ""
+			m.newFileInput.SetValue("")
 			return m, nil
 
 		case "ctrl+l":
@@ -63,6 +66,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			if m.createFileInputVisible {
 				m.createFileInputVisible = false
+				m.statusMessage = ""
+				m.statusType = ""
+				m.newFileInput.SetValue("")
 			}
 
 			if m.currentFile != nil {
@@ -87,7 +93,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.showingList {
 				item, ok := m.fileList.SelectedItem().(item)
 				if ok {
-					filepath := fmt.Sprintf("%s/%s", valutDir, item.title)
+					filepath := fmt.Sprintf("%s/%s", valutDir, item.filename)
 					content, err := os.ReadFile(filepath)
 					if err != nil {
 						fmt.Printf("cannot read the file: %v", err)
@@ -107,25 +113,51 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			filename := m.newFileInput.Value()
-			if filename != "" {
-				filePath := fmt.Sprintf("%s/%s.md", valutDir, filename)
-				_, err := os.Stat(filePath)
-				if err == nil {
-					log.Fatalf("File already exists: %s", filePath)
+			if m.createFileInputVisible {
+				filename := strings.TrimSpace(m.newFileInput.Value())
+
+				// Validate filename
+				if filename == "" {
+					m.statusMessage = "Please enter a note name"
+					m.statusType = "error"
 					return m, nil
 				}
 
+				// Check for invalid characters
+				invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
+				for _, char := range invalidChars {
+					if strings.Contains(filename, char) {
+						m.statusMessage = "Filename contains invalid characters"
+						m.statusType = "error"
+						return m, nil
+					}
+				}
+
+				filePath := fmt.Sprintf("%s/%s.md", valutDir, filename)
+
+				// Check if file already exists
+				_, err := os.Stat(filePath)
+				if err == nil {
+					m.statusMessage = "File already exists with this name"
+					m.statusType = "error"
+					return m, nil
+				}
+
+				// Create the file
 				f, err := os.Create(filePath)
 				if err != nil {
-					log.Fatalf("%v", err)
+					m.statusMessage = fmt.Sprintf("Failed to create file: %v", err)
+					m.statusType = "error"
+					return m, nil
 				}
 
 				m.currentFile = f
 				m.createFileInputVisible = false
 				m.newFileInput.SetValue("")
+				m.statusMessage = ""
+				m.statusType = ""
+				return m, nil
 			}
-			return m, nil
 		}
 	}
 
