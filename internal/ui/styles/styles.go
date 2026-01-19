@@ -1,4 +1,4 @@
-package main
+package styles
 
 import "github.com/charmbracelet/lipgloss"
 
@@ -44,7 +44,7 @@ var (
 `
 )
 
-// Color Scheme
+// Color Scheme - All exported for external use
 var (
 	// Primary colors
 	ColorPrimary   = lipgloss.Color("205") // Pink/Magenta
@@ -59,7 +59,7 @@ var (
 	ColorBg        = lipgloss.Color("235") // Dark background
 )
 
-// Global Styles
+// Global Styles - All exported for external use
 var (
 	HeaderStyle = lipgloss.NewStyle().
 			Foreground(ColorPrimary).

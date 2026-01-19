@@ -1,11 +1,11 @@
-package main
+package notes
 
 import (
 	"strings"
 )
 
-// insertBulletPoint inserts a bullet point at the current line
-func insertBulletPoint(text string, cursorLine int) string {
+// InsertBulletPoint inserts a bullet point at the current line
+func InsertBulletPoint(text string, cursorLine int) string {
 	lines := strings.Split(text, "\n")
 	if cursorLine >= len(lines) {
 		cursorLine = len(lines) - 1
@@ -22,8 +22,8 @@ func insertBulletPoint(text string, cursorLine int) string {
 	return strings.Join(lines, "\n")
 }
 
-// insertNumberedList inserts a numbered list item
-func insertNumberedList(text string, cursorLine int) string {
+// InsertNumberedList inserts a numbered list item
+func InsertNumberedList(text string, cursorLine int) string {
 	lines := strings.Split(text, "\n")
 	if cursorLine >= len(lines) {
 		cursorLine = len(lines) - 1
@@ -45,8 +45,8 @@ func insertNumberedList(text string, cursorLine int) string {
 	return strings.Join(lines, "\n")
 }
 
-// insertTodo inserts a todo checkbox
-func insertTodo(text string, cursorLine int) string {
+// InsertTodo inserts a todo checkbox
+func InsertTodo(text string, cursorLine int) string {
 	lines := strings.Split(text, "\n")
 	if cursorLine >= len(lines) {
 		cursorLine = len(lines) - 1
@@ -61,8 +61,8 @@ func insertTodo(text string, cursorLine int) string {
 	return strings.Join(lines, "\n")
 }
 
-// toggleTodo toggles a todo item between checked and unchecked
-func toggleTodo(text string, cursorLine int) string {
+// ToggleTodo toggles a todo item between checked and unchecked
+func ToggleTodo(text string, cursorLine int) string {
 	lines := strings.Split(text, "\n")
 	if cursorLine >= len(lines) {
 		cursorLine = len(lines) - 1
@@ -82,8 +82,8 @@ func toggleTodo(text string, cursorLine int) string {
 	return strings.Join(lines, "\n")
 }
 
-// insertHeader inserts a markdown header
-func insertHeader(text string, cursorLine int, level int) string {
+// InsertHeader inserts a markdown header
+func InsertHeader(text string, cursorLine int, level int) string {
 	lines := strings.Split(text, "\n")
 	if cursorLine >= len(lines) {
 		cursorLine = len(lines) - 1
@@ -101,8 +101,8 @@ func insertHeader(text string, cursorLine int, level int) string {
 	return strings.Join(lines, "\n")
 }
 
-// insertTable inserts a simple markdown table
-func insertTable(rows, cols int) string {
+// InsertTable inserts a simple markdown table
+func InsertTable(rows, cols int) string {
 	if rows < 2 {
 		rows = 2
 	}
@@ -138,8 +138,8 @@ func insertTable(rows, cols int) string {
 	return table.String()
 }
 
-// wrapSelection wraps selected text with markers (for bold, italic, code)
-func wrapSelection(text string, marker string) string {
+// WrapSelection wraps selected text with markers (for bold, italic, code)
+func WrapSelection(text string, marker string) string {
 	// If text is already wrapped, unwrap it
 	if strings.HasPrefix(text, marker) && strings.HasSuffix(text, marker) && len(text) > len(marker)*2 {
 		return text[len(marker) : len(text)-len(marker)]
@@ -147,31 +147,31 @@ func wrapSelection(text string, marker string) string {
 	return marker + text + marker
 }
 
-// insertCodeBlock inserts a code block with language
-func insertCodeBlock(language string) string {
+// InsertCodeBlock inserts a code block with language
+func InsertCodeBlock(language string) string {
 	if language == "" {
 		language = "go"
 	}
 	return "```" + language + "\n\n```"
 }
 
-// insertHorizontalRule inserts a horizontal rule
-func insertHorizontalRule() string {
+// InsertHorizontalRule inserts a horizontal rule
+func InsertHorizontalRule() string {
 	return "---\n"
 }
 
-// insertLink inserts a markdown link template
-func insertLink() string {
+// InsertLink inserts a markdown link template
+func InsertLink() string {
 	return "[link text](url)"
 }
 
-// insertImage inserts a markdown image template
-func insertImage() string {
+// InsertImage inserts a markdown image template
+func InsertImage() string {
 	return "![alt text](image-url)"
 }
 
-// getLineAtCursor returns the line number where cursor is positioned
-func getLineAtCursor(text string, cursorPos int) int {
+// GetLineAtCursor returns the line number where cursor is positioned
+func GetLineAtCursor(text string, cursorPos int) int {
 	if cursorPos <= 0 {
 		return 0
 	}

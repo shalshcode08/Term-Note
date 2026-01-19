@@ -1,4 +1,4 @@
-package main
+package notes
 
 import (
 	"fmt"
@@ -8,6 +8,17 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 )
+
+// Item represents a file list item
+type Item struct {
+	title, desc string
+	filename    string // Full filename with extension
+}
+
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
+func (i Item) Filename() string    { return i.filename }
 
 // formatRelativeTime returns a human-readable relative time string
 func formatRelativeTime(t time.Time) string {
@@ -83,11 +94,12 @@ type fileWithTime struct {
 	modTime time.Time
 }
 
-func listFiles() []list.Item {
+// ListFiles returns a list of all note files in the vault directory
+func ListFiles(vaultDir string) []list.Item {
 	items := make([]list.Item, 0)
 	filesWithTime := make([]fileWithTime, 0)
 
-	entries, err := os.ReadDir(valutDir)
+	entries, err := os.ReadDir(vaultDir)
 	if err != nil {
 		log.Fatal("error reading notes list")
 	}
@@ -118,7 +130,7 @@ func listFiles() []list.Item {
 
 	// Create list items from sorted files
 	for _, file := range filesWithTime {
-		items = append(items, item{
+		items = append(items, Item{
 			title:    file.name,
 			desc:     fmt.Sprintf("Modified: %s", file.modTime.Format("2006-01-02 15:04")),
 			filename: file.name, // Store full filename for opening

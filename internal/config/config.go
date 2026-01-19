@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	valutDir string
+	VaultDir string
 )
 
 func InitConfig() error {
@@ -16,9 +16,9 @@ func InitConfig() error {
 		return fmt.Errorf("error getting home directory: %w", err)
 	}
 
-	valutDir = fmt.Sprintf("%s/.termnote", homeDir)
+	VaultDir = fmt.Sprintf("%s/.termnote", homeDir)
 
-	err = os.MkdirAll(valutDir, 0750)
+	err = os.MkdirAll(VaultDir, 0750)
 	if err != nil {
 		return fmt.Errorf("error creating vault directory: %w", err)
 	}

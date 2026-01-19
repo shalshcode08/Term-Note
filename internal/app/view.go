@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -9,18 +9,20 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/shalshcode08/Term-Note/internal/ui/styles"
 )
 
 // renderLanding renders the beautiful landing page
 func renderLanding() string {
 	// Header with ASCII art (using "box" style, can be changed)
-	header := HeaderStyle.Render(GetASCIIArt("box"))
+	header := styles.HeaderStyle.Render(styles.GetASCIIArt("box"))
 
 	// Subtitle
-	subtitle := SubtitleStyle.Render("📝 Your Terminal Note-Taking Companion")
+	subtitle := styles.SubtitleStyle.Render("📝 Your Terminal Note-Taking Companion")
 
 	// Help section
-	helpTitle := HelpTitleStyle.Render("⌨️  Keyboard Shortcuts")
+	helpTitle := styles.HelpTitleStyle.Render("⌨️  Keyboard Shortcuts")
 
 	helpItems := []struct {
 		key  string
@@ -37,10 +39,10 @@ func renderLanding() string {
 	for _, item := range helpItems {
 		line := lipgloss.JoinHorizontal(
 			lipgloss.Left,
-			KeyStyle.Render(item.key),
-			DescStyle.Render(item.desc),
+			styles.KeyStyle.Render(item.key),
+			styles.DescStyle.Render(item.desc),
 		)
-		helpLines = append(helpLines, HelpItemStyle.Render(line))
+		helpLines = append(helpLines, styles.HelpItemStyle.Render(line))
 	}
 
 	helpSection := lipgloss.JoinVertical(
@@ -54,7 +56,7 @@ func renderLanding() string {
 		lipgloss.Center,
 		header,
 		subtitle,
-		BoxStyle.Render(helpSection),
+		styles.BoxStyle.Render(helpSection),
 	)
 
 	return content
@@ -63,51 +65,54 @@ func renderLanding() string {
 // renderCreateNoteDialog renders a beautiful dialog for creating new notes
 func renderCreateNoteDialog(input textinput.Model, statusMsg string, statusType string) string {
 	// Title with icon
-	title := DialogTitleStyle.Render("📝  CREATE NEW NOTE")
+	title := styles.DialogTitleStyle.Render("📝  CREATE NEW NOTE")
 
 	// Label for input with character counter
 	charCount := len(input.Value())
 	maxChars := input.CharLimit
-	counterStyle := lipgloss.NewStyle().Foreground(ColorMuted)
+	counterStyle := lipgloss.NewStyle().Foreground(styles.ColorMuted)
 	if charCount > maxChars-10 {
-		counterStyle = counterStyle.Foreground(ColorWarning)
+		counterStyle = counterStyle.Foreground(styles.ColorWarning)
 	}
 
 	labelWithCounter := lipgloss.JoinHorizontal(
 		lipgloss.Left,
-		InputLabelStyle.Render("Note Name:"),
+		styles.InputLabelStyle.Render("Note Name:"),
 		counterStyle.Render(fmt.Sprintf("  %d/%d", charCount, maxChars)),
 	)
 
 	// Input with prompt symbol
 	promptSymbol := lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(styles.ColorPrimary).
 		Bold(true).
 		Render("› ")
 
 	inputValue := lipgloss.JoinHorizontal(lipgloss.Left, promptSymbol, input.View())
-	inputBox := InputBoxStyle.Render(inputValue)
+	inputBox := styles.InputBoxStyle.Render(inputValue)
 
 	// File extension hint
-	extensionHint := FileExtensionStyle.Render(".md extension will be added automatically")
+	extensionHint := styles.FileExtensionStyle.Render(".md extension will be added automatically")
 
 	// Status message (if any)
 	var statusLine string
 	if statusMsg != "" {
 		switch statusType {
 		case "error":
-			statusLine = ErrorStyle.Render("❌ " + statusMsg)
+			statusLine = styles.ErrorStyle.Render("❌ " + statusMsg)
 		case "warning":
-			statusLine = WarningStyle.Render("⚠️  " + statusMsg)
+			statusLine = styles.WarningStyle.Render("⚠️  " + statusMsg)
 		case "success":
-			statusLine = SuccessStyle.Render("✓ " + statusMsg)
+			statusLine = styles.SuccessStyle.Render("✓ " + statusMsg)
 		default:
-			statusLine = ViewHelpStyle.Render(statusMsg)
+			statusLine = styles.ViewHelpStyle.Render(statusMsg)
 		}
+	} else {
+		// Tips section when no status message
+		statusLine = styles.InputTipStyle.Render("💡 Tip: Use descriptive names like 'meeting-notes' or 'project-ideas'")
 	}
 
 	// Help text
-	helpText := InputHelpStyle.Render("⏎ Enter to create  •  Esc to cancel")
+	helpText := styles.InputHelpStyle.Render("⏎ Enter to create  •  Esc to cancel")
 
 	// Combine all elements
 	content := lipgloss.JoinVertical(
@@ -124,7 +129,7 @@ func renderCreateNoteDialog(input textinput.Model, statusMsg string, statusType 
 	)
 
 	// Wrap in dialog box
-	dialog := DialogBoxStyle.Render(content)
+	dialog := styles.DialogBoxStyle.Render(content)
 
 	// Center on screen
 	return lipgloss.Place(
@@ -138,24 +143,24 @@ func renderCreateNoteDialog(input textinput.Model, statusMsg string, statusType 
 func renderDeleteConfirm(filename string) string {
 	dialogStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(ColorError).
+		BorderForeground(styles.ColorError).
 		Padding(2, 4).
 		Width(60)
 
 	titleStyle := lipgloss.NewStyle().
-		Foreground(ColorError).
+		Foreground(styles.ColorError).
 		Bold(true).
 		Align(lipgloss.Center).
 		Width(52)
 
 	filenameStyle := lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(styles.ColorPrimary).
 		Bold(true).
 		Align(lipgloss.Center).
 		Width(52)
 
 	messageStyle := lipgloss.NewStyle().
-		Foreground(ColorMuted).
+		Foreground(styles.ColorMuted).
 		Align(lipgloss.Center).
 		Width(52).
 		MarginTop(1)
@@ -171,14 +176,14 @@ func renderDeleteConfirm(filename string) string {
 
 	yesButton := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("0")).
-		Background(ColorError).
+		Background(styles.ColorError).
 		Bold(true).
 		Padding(0, 2).
 		Render(" Yes (Y) ")
 
 	noButton := lipgloss.NewStyle().
-		Foreground(ColorText).
-		Background(ColorMuted).
+		Foreground(styles.ColorText).
+		Background(styles.ColorMuted).
 		Bold(true).
 		Padding(0, 2).
 		Render(" No (N) ")
@@ -202,12 +207,13 @@ func renderFileListView(fileList list.Model, showDeleteConfirm bool, fileToDelet
 	// Check if list is empty
 	if len(fileList.Items()) == 0 {
 		emptyState := lipgloss.NewStyle().
-			Foreground(ColorMuted).
+			Foreground(styles.ColorMuted).
 			Align(lipgloss.Center).
 			Padding(10, 2).
 			Render("📝 No notes yet!\n\nPress Ctrl+N to create your first note")
 
-		return emptyState
+		header := styles.ListTitleStyle.Render("📋 All Notes")
+		return lipgloss.JoinVertical(lipgloss.Left, header, emptyState)
 	}
 
 	listView := fileList.View()
@@ -215,7 +221,7 @@ func renderFileListView(fileList list.Model, showDeleteConfirm bool, fileToDelet
 	// Add custom help text at bottom if not filtering
 	if fileList.FilterState() != list.Filtering {
 		helpText := lipgloss.NewStyle().
-			Foreground(ColorMuted).
+			Foreground(styles.ColorMuted).
 			Padding(1, 2).
 			Render("↑/↓: navigate  •  /: filter  •  Enter: open  •  d: delete  •  Esc: back  •  q: quit")
 
@@ -245,13 +251,13 @@ func renderFileListViewWithStatus(fileList list.Model, showDeleteConfirm bool, f
 		var statusStyle lipgloss.Style
 		switch statusType {
 		case "success":
-			statusStyle = SuccessStyle
+			statusStyle = styles.SuccessStyle
 		case "error":
-			statusStyle = ErrorStyle
+			statusStyle = styles.ErrorStyle
 		case "warning":
-			statusStyle = WarningStyle
+			statusStyle = styles.WarningStyle
 		default:
-			statusStyle = lipgloss.NewStyle().Foreground(ColorText)
+			statusStyle = lipgloss.NewStyle().Foreground(styles.ColorText)
 		}
 
 		statusBar := lipgloss.NewStyle().
@@ -268,18 +274,18 @@ func renderFileListViewWithStatus(fileList list.Model, showDeleteConfirm bool, f
 func renderHelpOverlay() string {
 	helpStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(ColorPrimary).
+		BorderForeground(styles.ColorPrimary).
 		Padding(2, 4).
 		Width(66)
 
 	titleStyle := lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(styles.ColorPrimary).
 		Bold(true).
 		Align(lipgloss.Center).
 		Width(58)
 
 	sectionStyle := lipgloss.NewStyle().
-		Foreground(ColorAccent).
+		Foreground(styles.ColorAccent).
 		Bold(true).
 		MarginTop(1)
 
@@ -326,14 +332,14 @@ func renderHelpOverlay() string {
 		sections = append(sections, "")
 		sections = append(sections, sectionStyle.Render(s.section))
 		for _, item := range s.items {
-			key := lipgloss.NewStyle().Foreground(ColorText).Bold(true).Render(item[0])
-			desc := lipgloss.NewStyle().Foreground(ColorMuted).Render("  " + item[1])
+			key := lipgloss.NewStyle().Foreground(styles.ColorText).Bold(true).Render(item[0])
+			desc := lipgloss.NewStyle().Foreground(styles.ColorMuted).Render("  " + item[1])
 			sections = append(sections, key+desc)
 		}
 	}
 
 	closeHint := lipgloss.NewStyle().
-		Foreground(ColorMuted).
+		Foreground(styles.ColorMuted).
 		Italic(true).
 		Align(lipgloss.Center).
 		Width(58).
@@ -362,7 +368,7 @@ func renderEditorView(currentFile *os.File, textArea textarea.Model, showHelp bo
 
 	// Header section with file info
 	headerStyle := lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(styles.ColorPrimary).
 		Bold(true)
 
 	header := headerStyle.Render("✏️  " + fileName)
@@ -372,17 +378,17 @@ func renderEditorView(currentFile *os.File, textArea textarea.Model, showHelp bo
 
 	// Status bar at bottom with markdown shortcuts
 	statusBarStyle := lipgloss.NewStyle().
-		Foreground(ColorMuted)
+		Foreground(styles.ColorMuted)
 
 	// Main commands
-	statusLeft := lipgloss.NewStyle().Foreground(ColorText).Render("Ctrl+S")
-	statusLeftDesc := lipgloss.NewStyle().Foreground(ColorMuted).Render(" Save")
+	statusLeft := lipgloss.NewStyle().Foreground(styles.ColorText).Render("Ctrl+S")
+	statusLeftDesc := lipgloss.NewStyle().Foreground(styles.ColorMuted).Render(" Save")
 
-	statusRight := lipgloss.NewStyle().Foreground(ColorText).Render("  •  Esc")
-	statusRightDesc := lipgloss.NewStyle().Foreground(ColorMuted).Render(" Close")
+	statusRight := lipgloss.NewStyle().Foreground(styles.ColorText).Render("  •  Esc")
+	statusRightDesc := lipgloss.NewStyle().Foreground(styles.ColorMuted).Render(" Close")
 
 	// Help hint
-	helpHint := lipgloss.NewStyle().Foreground(ColorMuted).Render("  •  Ctrl+H Help")
+	helpHint := lipgloss.NewStyle().Foreground(styles.ColorMuted).Render("  •  Ctrl+H Help")
 
 	statusBar := statusBarStyle.Render(statusLeft + statusLeftDesc + statusRight + statusRightDesc + helpHint)
 
@@ -414,8 +420,8 @@ func renderEditorView(currentFile *os.File, textArea textarea.Model, showHelp bo
 	return view
 }
 
-// View renders the current state of the application
-func (m model) View() string {
+// View renders the current state of the application (Bubble Tea interface)
+func (m Model) View() string {
 	// If showing the file input
 	if m.createFileInputVisible {
 		return renderCreateNoteDialog(m.newFileInput, m.statusMessage, m.statusType)

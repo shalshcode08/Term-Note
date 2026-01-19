@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"os"
@@ -8,24 +8,18 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/shalshcode08/Term-Note/internal/config"
+	"github.com/shalshcode08/Term-Note/internal/notes"
+	"github.com/shalshcode08/Term-Note/internal/ui/styles"
 )
 
 var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	docStyle    = lipgloss.NewStyle().Margin(1, 2)
+	DocStyle = lipgloss.NewStyle().Margin(1, 2)
 )
 
-type item struct {
-	title, desc string
-	filename    string // Full filename with extension
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
-func (i item) Filename() string    { return i.filename }
-
-type model struct {
+// Model represents the application state
+type Model struct {
 	newFileInput           textinput.Model
 	createFileInputVisible bool
 	currentFile            *os.File
@@ -41,17 +35,18 @@ type model struct {
 	windowHeight           int    // Terminal window height
 }
 
-func initializeModel() model {
+// New creates and initializes a new application model
+func New() Model {
 	ti := textinput.New()
 	ti.Placeholder = "my-awesome-note"
 	ti.Focus()
 	ti.CharLimit = 100
 	ti.Width = 56
 	ti.Prompt = "" // Hide default prompt, we'll add custom one in view
-	ti.Cursor.Style = lipgloss.NewStyle().Foreground(ColorPrimary)
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true)
-	ti.TextStyle = lipgloss.NewStyle().Foreground(ColorText)
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ColorMuted).Italic(true)
+	ti.Cursor.Style = lipgloss.NewStyle().Foreground(styles.ColorPrimary)
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(styles.ColorPrimary).Bold(true)
+	ti.TextStyle = lipgloss.NewStyle().Foreground(styles.ColorText)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(styles.ColorMuted).Italic(true)
 
 	ta := textarea.New()
 	ta.Placeholder = "Start writing your note..."
@@ -62,35 +57,35 @@ func initializeModel() model {
 	ta.SetHeight(20)
 	ta.Prompt = "" // Remove prompt to eliminate left line
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
-	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ColorMuted)
-	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ColorText)
+	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(styles.ColorMuted)
+	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(styles.ColorText)
 	ta.FocusedStyle.Prompt = lipgloss.NewStyle()
 	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle()
 	ta.FocusedStyle.LineNumber = lipgloss.NewStyle()
-	ta.BlurredStyle.Placeholder = lipgloss.NewStyle().Foreground(ColorMuted)
-	ta.BlurredStyle.Text = lipgloss.NewStyle().Foreground(ColorText)
+	ta.BlurredStyle.Placeholder = lipgloss.NewStyle().Foreground(styles.ColorMuted)
+	ta.BlurredStyle.Text = lipgloss.NewStyle().Foreground(styles.ColorText)
 	ta.BlurredStyle.Prompt = lipgloss.NewStyle()
 	ta.BlurredStyle.EndOfBuffer = lipgloss.NewStyle()
 	ta.BlurredStyle.LineNumber = lipgloss.NewStyle()
 
-	notesList := listFiles()
+	notesList := notes.ListFiles(config.VaultDir)
 	finalList := list.New(notesList, list.NewDefaultDelegate(), 0, 0)
 	finalList.Title = "All Notes"
 	finalList.Styles.Title = lipgloss.NewStyle().
-		Foreground(ColorPrimary).
+		Foreground(styles.ColorPrimary).
 		Bold(true)
-	finalList.Styles.FilterPrompt = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true)
-	finalList.Styles.FilterCursor = lipgloss.NewStyle().Foreground(ColorPrimary)
+	finalList.Styles.FilterPrompt = lipgloss.NewStyle().Foreground(styles.ColorPrimary).Bold(true)
+	finalList.Styles.FilterCursor = lipgloss.NewStyle().Foreground(styles.ColorPrimary)
 	finalList.SetShowStatusBar(true)
 	finalList.SetFilteringEnabled(true)
 	finalList.Styles.StatusBar = lipgloss.NewStyle().
-		Foreground(ColorMuted).
+		Foreground(styles.ColorMuted).
 		Padding(0, 2)
-	finalList.Styles.HelpStyle = ListHelpStyle
+	finalList.Styles.HelpStyle = styles.ListHelpStyle
 	finalList.SetStatusBarItemName("note", "notes")
 	finalList.SetShowHelp(false) // Disable default help, we have custom help text
 
-	return model{
+	return Model{
 		newFileInput:           ti,
 		createFileInputVisible: false,
 		textArea:               ta,
@@ -106,6 +101,7 @@ func initializeModel() model {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+// Init initializes the model (Bubble Tea interface)
+func (m Model) Init() tea.Cmd {
 	return nil
 }

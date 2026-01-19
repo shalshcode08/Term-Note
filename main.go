@@ -5,12 +5,13 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/shalshcode08/Term-Note/internal/app"
 )
 
 func main() {
-	p := tea.NewProgram(initializeModel())
+	p := tea.NewProgram(app.New())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("there's been an error: %v", err)
+		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
 }

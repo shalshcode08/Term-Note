@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -7,9 +7,13 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/shalshcode08/Term-Note/internal/config"
+	"github.com/shalshcode08/Term-Note/internal/notes"
 )
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+// Update handles messages and updates the model (Bubble Tea interface)
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -18,7 +22,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.windowWidth = msg.Width
 		m.windowHeight = msg.Height
 
-		h, v := docStyle.GetFrameSize()
+		h, v := DocStyle.GetFrameSize()
 		m.fileList.SetSize(msg.Width-h, msg.Height-v)
 		// Resize textarea for editor view - use full window
 		m.textArea.SetWidth(msg.Width)
@@ -37,7 +41,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case "ctrl+l":
-			notesList := listFiles()
+			notesList := notes.ListFiles(config.VaultDir)
 			m.fileList.SetItems(notesList)
 			m.showingList = true
 			m.statusMessage = ""
@@ -47,7 +51,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "d", "delete":
 			// Delete note - only works in list view
 			if m.showingList && !m.showDeleteConfirm {
-				selectedItem, ok := m.fileList.SelectedItem().(item)
+				selectedItem, ok := m.fileList.SelectedItem().(notes.Item)
 				if ok {
 					m.fileToDelete = selectedItem.Filename()
 					m.showDeleteConfirm = true
@@ -58,7 +62,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "y":
 			// Confirm delete
 			if m.showDeleteConfirm {
-				filePath := fmt.Sprintf("%s/%s", valutDir, m.fileToDelete)
+				filePath := fmt.Sprintf("%s/%s", config.VaultDir, m.fileToDelete)
 				if err := os.Remove(filePath); err != nil {
 					m.statusMessage = "Failed to delete note"
 					m.statusType = "error"
@@ -66,7 +70,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.statusMessage = "Note deleted successfully"
 					m.statusType = "success"
 					// Refresh the list
-					notesList := listFiles()
+					notesList := notes.ListFiles(config.VaultDir)
 					m.fileList.SetItems(notesList)
 				}
 				m.showDeleteConfirm = false
@@ -153,9 +157,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.showingList {
-				item, ok := m.fileList.SelectedItem().(item)
+				selectedItem, ok := m.fileList.SelectedItem().(notes.Item)
 				if ok {
-					filepath := fmt.Sprintf("%s/%s", valutDir, item.filename)
+					filepath := fmt.Sprintf("%s/%s", config.VaultDir, selectedItem.Filename())
 					content, err := os.ReadFile(filepath)
 					if err != nil {
 						fmt.Printf("cannot read the file: %v", err)
@@ -176,49 +180,51 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.createFileInputVisible {
-				filename := strings.TrimSpace(m.newFileInput.Value())
+				if m.createFileInputVisible {
+					filename := strings.TrimSpace(m.newFileInput.Value())
 
-				// Validate filename
-				if filename == "" {
-					m.statusMessage = "Please enter a note name"
-					m.statusType = "error"
-					return m, nil
-				}
-
-				// Check for invalid characters
-				invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
-				for _, char := range invalidChars {
-					if strings.Contains(filename, char) {
-						m.statusMessage = "Filename contains invalid characters"
+					// Validate filename
+					if filename == "" {
+						m.statusMessage = "Please enter a note name"
 						m.statusType = "error"
 						return m, nil
 					}
-				}
 
-				filePath := fmt.Sprintf("%s/%s.md", valutDir, filename)
+					// Check for invalid characters
+					invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
+					for _, char := range invalidChars {
+						if strings.Contains(filename, char) {
+							m.statusMessage = "Filename contains invalid characters"
+							m.statusType = "error"
+							return m, nil
+						}
+					}
 
-				// Check if file already exists
-				_, err := os.Stat(filePath)
-				if err == nil {
-					m.statusMessage = "File already exists with this name"
-					m.statusType = "error"
+					filePath := fmt.Sprintf("%s/%s.md", config.VaultDir, filename)
+
+					// Check if file already exists
+					_, err := os.Stat(filePath)
+					if err == nil {
+						m.statusMessage = "File already exists with this name"
+						m.statusType = "error"
+						return m, nil
+					}
+
+					// Create the file
+					f, err := os.Create(filePath)
+					if err != nil {
+						m.statusMessage = fmt.Sprintf("Failed to create file: %v", err)
+						m.statusType = "error"
+						return m, nil
+					}
+
+					m.currentFile = f
+					m.createFileInputVisible = false
+					m.newFileInput.SetValue("")
+					m.statusMessage = ""
+					m.statusType = ""
 					return m, nil
 				}
-
-				// Create the file
-				f, err := os.Create(filePath)
-				if err != nil {
-					m.statusMessage = fmt.Sprintf("Failed to create file: %v", err)
-					m.statusType = "error"
-					return m, nil
-				}
-
-				m.currentFile = f
-				m.createFileInputVisible = false
-				m.newFileInput.SetValue("")
-				m.statusMessage = ""
-				m.statusType = ""
-				return m, nil
 			}
 		}
 	}
@@ -247,7 +253,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Toggle todo checkbox (check/uncheck) on current cursor line
 				// Get current line number from textarea
 				currentLine := m.textArea.Line()
-				newText := toggleTodo(m.textArea.Value(), currentLine)
+				newText := notes.ToggleTodo(m.textArea.Value(), currentLine)
 				m.textArea.SetValue(newText)
 				return m, nil
 			case "ctrl+1":
@@ -264,23 +270,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			case "alt+t":
 				// Insert table
-				m.textArea.InsertString(insertTable(3, 3))
+				m.textArea.InsertString(notes.InsertTable(3, 3))
 				return m, nil
 			case "alt+c":
 				// Insert code block
-				m.textArea.InsertString(insertCodeBlock(""))
+				m.textArea.InsertString(notes.InsertCodeBlock(""))
 				return m, nil
 			case "alt+l":
 				// Insert link
-				m.textArea.InsertString(insertLink())
+				m.textArea.InsertString(notes.InsertLink())
 				return m, nil
 			case "alt+i":
 				// Insert image
-				m.textArea.InsertString(insertImage())
+				m.textArea.InsertString(notes.InsertImage())
 				return m, nil
 			case "alt+r":
 				// Insert horizontal rule
-				m.textArea.InsertString(insertHorizontalRule())
+				m.textArea.InsertString(notes.InsertHorizontalRule())
 				return m, nil
 			case "enter":
 				// Auto-continue lists on Enter
