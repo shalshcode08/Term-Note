@@ -2,11 +2,6 @@
 
 A minimal terminal-based note-taking application built with Go and Bubble Tea.
 
-  ______                   _   __      __
- /_  __/__ ______ _  ___  / | / /__  / /____
-  / / / -_) __/  ' \/ _ \/  |/ / _ \/ __/ -_)
- /_/  \__/_/ /_/_/_/_//_/_/|___/\___/\__/\__/
-
 ## Features
 
 - Create and edit Markdown notes
