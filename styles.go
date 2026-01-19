@@ -178,17 +178,17 @@ var (
 	ListTitleStyle = lipgloss.NewStyle().
 			Foreground(ColorPrimary).
 			Bold(true).
-			Padding(0, 1).
-			MarginLeft(2).
-			MarginBottom(1)
+			Padding(0, 0).
+			MarginLeft(0).
+			MarginTop(0).
+			MarginBottom(0)
 
 	ListItemTitleStyle = lipgloss.NewStyle().
 				Foreground(ColorText).
 				Bold(true)
 
 	ListItemDescStyle = lipgloss.NewStyle().
-				Foreground(ColorMuted).
-				Italic(true)
+				Foreground(ColorMuted)
 
 	ListItemSelectedTitleStyle = lipgloss.NewStyle().
 					Foreground(ColorPrimary).

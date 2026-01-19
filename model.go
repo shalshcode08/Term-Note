@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"os"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -26,33 +24,6 @@ func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 func (i item) Filename() string    { return i.filename }
-
-// customDelegate is a custom list item delegate with enhanced styling
-type customDelegate struct{}
-
-func (d customDelegate) Height() int                               { return 2 }
-func (d customDelegate) Spacing() int                              { return 1 }
-func (d customDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-func (d customDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	// Get styles based on selection
-	var title, desc string
-	if index == m.Index() {
-		// Selected item
-		title = ListItemSelectedTitleStyle.Render(i.Title())
-		desc = ListItemSelectedDescStyle.Render("  " + i.Description())
-	} else {
-		// Normal item
-		title = ListItemTitleStyle.Render(i.Title())
-		desc = ListItemDescStyle.Render("  " + i.Description())
-	}
-
-	fmt.Fprintf(w, "%s\n%s", title, desc)
-}
 
 type model struct {
 	newFileInput           textinput.Model
@@ -83,10 +54,11 @@ func initializeModel() model {
 	ta.ShowLineNumbers = false
 
 	notesList := listFiles()
-	delegate := customDelegate{}
-	finalList := list.New(notesList, delegate, 0, 0)
-	finalList.Title = "📋 All Notes"
-	finalList.Styles.Title = ListTitleStyle
+	finalList := list.New(notesList, list.NewDefaultDelegate(), 0, 0)
+	finalList.Title = "All Notes"
+	finalList.Styles.Title = lipgloss.NewStyle().
+		Foreground(ColorPrimary).
+		Bold(true)
 	finalList.Styles.FilterPrompt = lipgloss.NewStyle().Foreground(ColorPrimary).Bold(true)
 	finalList.Styles.FilterCursor = lipgloss.NewStyle().Foreground(ColorPrimary)
 	finalList.SetShowStatusBar(true)
@@ -96,6 +68,7 @@ func initializeModel() model {
 		Padding(0, 2)
 	finalList.Styles.HelpStyle = ListHelpStyle
 	finalList.SetStatusBarItemName("note", "notes")
+	finalList.SetShowHelp(false) // Disable default help, we have custom help text
 
 	return model{
 		newFileInput:           ti,

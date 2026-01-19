@@ -142,8 +142,7 @@ func renderFileListView(fileList list.Model) string {
 			Padding(10, 2).
 			Render("📝 No notes yet!\n\nPress Ctrl+N to create your first note")
 
-		header := ListTitleStyle.Render("📋 All Notes")
-		return lipgloss.JoinVertical(lipgloss.Left, header, emptyState)
+		return emptyState
 	}
 
 	listView := fileList.View()
