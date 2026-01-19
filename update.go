@@ -16,6 +16,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
 		m.fileList.SetSize(msg.Width-h, msg.Height-v)
+		// Resize textarea for editor view - use full window
+		m.textArea.SetWidth(msg.Width)
+		m.textArea.SetHeight(msg.Height - 4) // Leave space for header and status bar
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -69,6 +72,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.statusMessage = ""
 				m.statusType = ""
 				m.newFileInput.SetValue("")
+			}
+
+			if m.showHelp {
+				m.showHelp = false
+				return m, nil
 			}
 
 			if m.currentFile != nil {
@@ -166,6 +174,101 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.currentFile != nil {
+		// Check for markdown shortcuts before passing to textarea
+		if msg, ok := msg.(tea.KeyMsg); ok {
+			switch msg.String() {
+			case "ctrl+h":
+				// Toggle help menu
+				m.showHelp = !m.showHelp
+				return m, nil
+			case "ctrl+b":
+				// Toggle bullet point - insert at cursor
+				m.textArea.InsertString("- ")
+				return m, nil
+			case "ctrl+t":
+				// Insert todo checkbox
+				m.textArea.InsertString("- [ ] ")
+				return m, nil
+			case "ctrl+d":
+				// Toggle todo checkbox (check/uncheck) on current cursor line
+				// Get current line number from textarea
+				currentLine := m.textArea.Line()
+				newText := toggleTodo(m.textArea.Value(), currentLine)
+				m.textArea.SetValue(newText)
+				return m, nil
+			case "ctrl+1":
+				// Insert H1 header
+				m.textArea.InsertString("# ")
+				return m, nil
+			case "ctrl+2":
+				// Insert H2 header
+				m.textArea.InsertString("## ")
+				return m, nil
+			case "ctrl+3":
+				// Insert H3 header
+				m.textArea.InsertString("### ")
+				return m, nil
+			case "alt+t":
+				// Insert table
+				m.textArea.InsertString(insertTable(3, 3))
+				return m, nil
+			case "alt+c":
+				// Insert code block
+				m.textArea.InsertString(insertCodeBlock(""))
+				return m, nil
+			case "alt+l":
+				// Insert link
+				m.textArea.InsertString(insertLink())
+				return m, nil
+			case "alt+i":
+				// Insert image
+				m.textArea.InsertString(insertImage())
+				return m, nil
+			case "alt+r":
+				// Insert horizontal rule
+				m.textArea.InsertString(insertHorizontalRule())
+				return m, nil
+			case "enter":
+				// Auto-continue lists on Enter
+				text := m.textArea.Value()
+				lines := strings.Split(text, "\n")
+				if len(lines) > 0 {
+					lastLine := strings.TrimRight(lines[len(lines)-1], " \t")
+
+					// Check for todo items FIRST (before bullets)
+					if strings.HasPrefix(lastLine, "- [ ] ") && len(lastLine) > 6 {
+						m.textArea.InsertString("\n- [ ] ")
+						return m, nil
+					}
+					if strings.HasPrefix(lastLine, "- [x] ") && len(lastLine) > 6 {
+						m.textArea.InsertString("\n- [ ] ")
+						return m, nil
+					}
+
+					// Check for bullet points (after todos)
+					if strings.HasPrefix(lastLine, "- ") && len(lastLine) > 2 {
+						m.textArea.InsertString("\n- ")
+						return m, nil
+					}
+					if strings.HasPrefix(lastLine, "* ") && len(lastLine) > 2 {
+						m.textArea.InsertString("\n* ")
+						return m, nil
+					}
+
+					// Check for numbered lists
+					if len(lastLine) > 2 && lastLine[0] >= '0' && lastLine[0] <= '9' && lastLine[1] == '.' && lastLine[2] == ' ' {
+						nextNum := int(lastLine[0]-'0') + 1
+						if nextNum <= 9 {
+							m.textArea.InsertString(fmt.Sprintf("\n%d. ", nextNum))
+							return m, nil
+						}
+					}
+				}
+				// If not a list, just add newline normally
+				m.textArea.InsertString("\n")
+				return m, nil
+			}
+		}
 		m.textArea, cmd = m.textArea.Update(msg)
 	}
 

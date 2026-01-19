@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -160,6 +162,156 @@ func renderFileListView(fileList list.Model) string {
 	return listView
 }
 
+// renderHelpOverlay renders the help menu with all shortcuts
+func renderHelpOverlay() string {
+	helpStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorPrimary).
+		Padding(2, 4).
+		Width(66)
+
+	titleStyle := lipgloss.NewStyle().
+		Foreground(ColorPrimary).
+		Bold(true).
+		Align(lipgloss.Center).
+		Width(58)
+
+	sectionStyle := lipgloss.NewStyle().
+		Foreground(ColorAccent).
+		Bold(true).
+		MarginTop(1)
+
+	title := titleStyle.Render("⌨️  KEYBOARD SHORTCUTS")
+
+	// Format shortcuts with proper alignment
+	shortcuts := []struct {
+		section string
+		items   [][2]string
+	}{
+		{
+			section: "Basic Commands:",
+			items: [][2]string{
+				{"Ctrl+S", "Save note"},
+				{"Ctrl+H", "Toggle this help"},
+				{"Esc   ", "Close without saving"},
+			},
+		},
+		{
+			section: "Markdown Formatting:",
+			items: [][2]string{
+				{"Ctrl+B", "Insert bullet point (- )"},
+				{"Ctrl+T", "Insert todo checkbox (- [ ] )"},
+				{"Ctrl+D", "Toggle todo (check/uncheck)"},
+				{"Ctrl+1", "Insert H1 header (# )"},
+				{"Ctrl+2", "Insert H2 header (## )"},
+				{"Ctrl+3", "Insert H3 header (### )"},
+			},
+		},
+		{
+			section: "Advanced Features:",
+			items: [][2]string{
+				{"Alt+T ", "Insert table"},
+				{"Alt+C ", "Insert code block"},
+				{"Alt+L ", "Insert link template"},
+				{"Alt+I ", "Insert image template"},
+				{"Alt+R ", "Insert horizontal rule"},
+			},
+		},
+	}
+
+	var sections []string
+	for _, s := range shortcuts {
+		sections = append(sections, "")
+		sections = append(sections, sectionStyle.Render(s.section))
+		for _, item := range s.items {
+			key := lipgloss.NewStyle().Foreground(ColorText).Bold(true).Render(item[0])
+			desc := lipgloss.NewStyle().Foreground(ColorMuted).Render("  " + item[1])
+			sections = append(sections, key+desc)
+		}
+	}
+
+	closeHint := lipgloss.NewStyle().
+		Foreground(ColorMuted).
+		Italic(true).
+		Align(lipgloss.Center).
+		Width(58).
+		MarginTop(2).
+		Render("Press Ctrl+H or Esc to close")
+
+	content := lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		strings.Join(sections, "\n"),
+		"",
+		closeHint,
+	)
+
+	return helpStyle.Render(content)
+}
+
+// renderEditorView renders the note editing interface
+func renderEditorView(currentFile *os.File, textArea textarea.Model, showHelp bool) string {
+	// Extract just the filename from the full path
+	fullPath := currentFile.Name()
+	fileName := fullPath
+	if idx := strings.LastIndex(fullPath, "/"); idx != -1 {
+		fileName = fullPath[idx+1:]
+	}
+
+	// Header section with file info
+	headerStyle := lipgloss.NewStyle().
+		Foreground(ColorPrimary).
+		Bold(true)
+
+	header := headerStyle.Render("✏️  " + fileName)
+
+	// Editor without border - clean and minimal
+	editor := textArea.View()
+
+	// Status bar at bottom with markdown shortcuts
+	statusBarStyle := lipgloss.NewStyle().
+		Foreground(ColorMuted)
+
+	// Main commands
+	statusLeft := lipgloss.NewStyle().Foreground(ColorText).Render("Ctrl+S")
+	statusLeftDesc := lipgloss.NewStyle().Foreground(ColorMuted).Render(" Save")
+
+	statusRight := lipgloss.NewStyle().Foreground(ColorText).Render("  •  Esc")
+	statusRightDesc := lipgloss.NewStyle().Foreground(ColorMuted).Render(" Close")
+
+	// Help hint
+	helpHint := lipgloss.NewStyle().Foreground(ColorMuted).Render("  •  Ctrl+H Help")
+
+	statusBar := statusBarStyle.Render(statusLeft + statusLeftDesc + statusRight + statusRightDesc + helpHint)
+
+	// Combine all parts
+	view := lipgloss.JoinVertical(
+		lipgloss.Left,
+		header,
+		"",
+		editor,
+		"",
+		statusBar,
+	)
+
+	// Overlay help if toggled
+	if showHelp {
+		helpOverlay := renderHelpOverlay()
+		// Place help overlay centered on top of the editor view
+		return lipgloss.Place(
+			lipgloss.Width(view),
+			lipgloss.Height(view),
+			lipgloss.Center,
+			lipgloss.Center,
+			helpOverlay,
+			lipgloss.WithWhitespaceChars(" "),
+			lipgloss.WithWhitespaceForeground(lipgloss.Color("0")),
+		)
+	}
+
+	return view
+}
+
 // View renders the current state of the application
 func (m model) View() string {
 	// If showing the file input
@@ -169,11 +321,7 @@ func (m model) View() string {
 
 	// If editing a file
 	if m.currentFile != nil {
-		fileName := ViewTitleStyle.Render(fmt.Sprintf("✏️  Editing: %s", m.currentFile.Name()))
-
-		help := ViewHelpStyle.Render("Ctrl+S: Save • Esc: Close without saving")
-
-		return fmt.Sprintf("%s\n\n%s\n\n%s", fileName, m.textArea.View(), help)
+		return renderEditorView(m.currentFile, m.textArea, m.showHelp)
 	}
 
 	// If showing the file list

@@ -34,6 +34,7 @@ type model struct {
 	showingList            bool
 	statusMessage          string
 	statusType             string // "success", "error", "warning", ""
+	showHelp               bool   // Toggle help overlay
 }
 
 func initializeModel() model {
@@ -49,9 +50,24 @@ func initializeModel() model {
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ColorMuted).Italic(true)
 
 	ta := textarea.New()
-	ta.Placeholder = "Write your note here..."
+	ta.Placeholder = "Start writing your note..."
 	ta.Focus()
 	ta.ShowLineNumbers = false
+	ta.CharLimit = 0 // No limit
+	ta.SetWidth(80)
+	ta.SetHeight(20)
+	ta.Prompt = "" // Remove prompt to eliminate left line
+	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	ta.FocusedStyle.Placeholder = lipgloss.NewStyle().Foreground(ColorMuted)
+	ta.FocusedStyle.Text = lipgloss.NewStyle().Foreground(ColorText)
+	ta.FocusedStyle.Prompt = lipgloss.NewStyle()
+	ta.FocusedStyle.EndOfBuffer = lipgloss.NewStyle()
+	ta.FocusedStyle.LineNumber = lipgloss.NewStyle()
+	ta.BlurredStyle.Placeholder = lipgloss.NewStyle().Foreground(ColorMuted)
+	ta.BlurredStyle.Text = lipgloss.NewStyle().Foreground(ColorText)
+	ta.BlurredStyle.Prompt = lipgloss.NewStyle()
+	ta.BlurredStyle.EndOfBuffer = lipgloss.NewStyle()
+	ta.BlurredStyle.LineNumber = lipgloss.NewStyle()
 
 	notesList := listFiles()
 	finalList := list.New(notesList, list.NewDefaultDelegate(), 0, 0)
@@ -78,6 +94,7 @@ func initializeModel() model {
 		showingList:            false,
 		statusMessage:          "",
 		statusType:             "",
+		showHelp:               false,
 	}
 }
 
