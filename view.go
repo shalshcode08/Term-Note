@@ -134,8 +134,71 @@ func renderCreateNoteDialog(input textinput.Model, statusMsg string, statusType 
 	)
 }
 
+// renderDeleteConfirm renders the delete confirmation dialog
+func renderDeleteConfirm(filename string) string {
+	dialogStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(ColorError).
+		Padding(2, 4).
+		Width(60)
+
+	titleStyle := lipgloss.NewStyle().
+		Foreground(ColorError).
+		Bold(true).
+		Align(lipgloss.Center).
+		Width(52)
+
+	filenameStyle := lipgloss.NewStyle().
+		Foreground(ColorPrimary).
+		Bold(true).
+		Align(lipgloss.Center).
+		Width(52)
+
+	messageStyle := lipgloss.NewStyle().
+		Foreground(ColorMuted).
+		Align(lipgloss.Center).
+		Width(52).
+		MarginTop(1)
+
+	buttonsStyle := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Width(52).
+		MarginTop(2)
+
+	title := titleStyle.Render("⚠️  DELETE NOTE")
+	file := filenameStyle.Render(filename)
+	message := messageStyle.Render("Are you sure you want to delete this note?\nThis action cannot be undone.")
+
+	yesButton := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("0")).
+		Background(ColorError).
+		Bold(true).
+		Padding(0, 2).
+		Render(" Yes (Y) ")
+
+	noButton := lipgloss.NewStyle().
+		Foreground(ColorText).
+		Background(ColorMuted).
+		Bold(true).
+		Padding(0, 2).
+		Render(" No (N) ")
+
+	buttons := buttonsStyle.Render(yesButton + "  " + noButton)
+
+	content := lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		"",
+		file,
+		message,
+		buttons,
+	)
+
+	return dialogStyle.Render(content)
+}
+
 // renderFileListView renders the file list with enhanced styling
-func renderFileListView(fileList list.Model) string {
+func renderFileListView(fileList list.Model, showDeleteConfirm bool, fileToDelete string) string {
 	// Check if list is empty
 	if len(fileList.Items()) == 0 {
 		emptyState := lipgloss.NewStyle().
@@ -154,9 +217,48 @@ func renderFileListView(fileList list.Model) string {
 		helpText := lipgloss.NewStyle().
 			Foreground(ColorMuted).
 			Padding(1, 2).
-			Render("↑/↓: navigate  •  /: filter  •  Enter: open  •  Esc: back  •  q: quit")
+			Render("↑/↓: navigate  •  /: filter  •  Enter: open  •  d: delete  •  Esc: back  •  q: quit")
 
-		return lipgloss.JoinVertical(lipgloss.Left, listView, helpText)
+		listView = lipgloss.JoinVertical(lipgloss.Left, listView, helpText)
+	}
+
+	return listView
+}
+
+// renderFileListViewWithStatus renders the file list with status messages
+func renderFileListViewWithStatus(fileList list.Model, showDeleteConfirm bool, fileToDelete string, statusMessage string, statusType string, windowWidth int, windowHeight int) string {
+	listView := renderFileListView(fileList, false, "")
+
+	// Show delete confirmation overlay if active - do this FIRST to center it
+	if showDeleteConfirm {
+		confirmDialog := renderDeleteConfirm(fileToDelete)
+		return lipgloss.Place(
+			windowWidth, windowHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			confirmDialog,
+		)
+	}
+
+	// Show status message if present
+	if statusMessage != "" {
+		var statusStyle lipgloss.Style
+		switch statusType {
+		case "success":
+			statusStyle = SuccessStyle
+		case "error":
+			statusStyle = ErrorStyle
+		case "warning":
+			statusStyle = WarningStyle
+		default:
+			statusStyle = lipgloss.NewStyle().Foreground(ColorText)
+		}
+
+		statusBar := lipgloss.NewStyle().
+			Padding(0, 2).
+			Render(statusStyle.Render(statusMessage))
+
+		return lipgloss.JoinVertical(lipgloss.Left, statusBar, listView)
 	}
 
 	return listView
@@ -326,7 +428,7 @@ func (m model) View() string {
 
 	// If showing the file list
 	if m.showingList {
-		return renderFileListView(m.fileList)
+		return renderFileListViewWithStatus(m.fileList, m.showDeleteConfirm, m.fileToDelete, m.statusMessage, m.statusType, m.windowWidth, m.windowHeight)
 	}
 
 	// Default: show landing page

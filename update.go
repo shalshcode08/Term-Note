@@ -14,6 +14,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		// Store window dimensions for centering dialogs
+		m.windowWidth = msg.Width
+		m.windowHeight = msg.Height
+
 		h, v := docStyle.GetFrameSize()
 		m.fileList.SetSize(msg.Width-h, msg.Height-v)
 		// Resize textarea for editor view - use full window
@@ -36,12 +40,53 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			notesList := listFiles()
 			m.fileList.SetItems(notesList)
 			m.showingList = true
+			m.statusMessage = ""
+			m.statusType = ""
+			return m, nil
+
+		case "d", "delete":
+			// Delete note - only works in list view
+			if m.showingList && !m.showDeleteConfirm {
+				selectedItem, ok := m.fileList.SelectedItem().(item)
+				if ok {
+					m.fileToDelete = selectedItem.Filename()
+					m.showDeleteConfirm = true
+				}
+			}
+			return m, nil
+
+		case "y":
+			// Confirm delete
+			if m.showDeleteConfirm {
+				filePath := fmt.Sprintf("%s/%s", valutDir, m.fileToDelete)
+				if err := os.Remove(filePath); err != nil {
+					m.statusMessage = "Failed to delete note"
+					m.statusType = "error"
+				} else {
+					m.statusMessage = "Note deleted successfully"
+					m.statusType = "success"
+					// Refresh the list
+					notesList := listFiles()
+					m.fileList.SetItems(notesList)
+				}
+				m.showDeleteConfirm = false
+				m.fileToDelete = ""
+			}
+			return m, nil
+
+		case "n":
+			// Cancel delete
+			if m.showDeleteConfirm {
+				m.showDeleteConfirm = false
+				m.fileToDelete = ""
+			}
 			return m, nil
 
 		case "ctrl+s":
 			if m.currentFile == nil {
 				break
 			}
+			// Save the file content
 			if err := m.currentFile.Truncate(0); err != nil {
 				fmt.Println("cannot save the file :(")
 				return m, nil
@@ -57,16 +102,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 
-			if err := m.currentFile.Close(); err != nil {
-				fmt.Println("cannot close the file")
+			// Sync to disk but keep file open
+			if err := m.currentFile.Sync(); err != nil {
+				fmt.Println("cannot sync the file")
 			}
 
-			m.currentFile = nil
-			m.textArea.SetValue("")
-
+			// Don't close file, don't clear textarea - just save and continue editing
 			return m, nil
 
 		case "esc":
+			if m.showDeleteConfirm {
+				m.showDeleteConfirm = false
+				m.fileToDelete = ""
+				return m, nil
+			}
+
 			if m.createFileInputVisible {
 				m.createFileInputVisible = false
 				m.statusMessage = ""
@@ -80,8 +130,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.currentFile != nil {
-				m.textArea.SetValue("")
+				// Close the file before exiting
+				if err := m.currentFile.Close(); err != nil {
+					fmt.Println("error closing file")
+				}
 				m.currentFile = nil
+				m.textArea.SetValue("")
 			}
 
 			if m.showingList {

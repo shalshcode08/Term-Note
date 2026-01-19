@@ -35,6 +35,10 @@ type model struct {
 	statusMessage          string
 	statusType             string // "success", "error", "warning", ""
 	showHelp               bool   // Toggle help overlay
+	showDeleteConfirm      bool   // Show delete confirmation dialog
+	fileToDelete           string // Filename to delete
+	windowWidth            int    // Terminal window width
+	windowHeight           int    // Terminal window height
 }
 
 func initializeModel() model {
@@ -95,6 +99,10 @@ func initializeModel() model {
 		statusMessage:          "",
 		statusType:             "",
 		showHelp:               false,
+		showDeleteConfirm:      false,
+		fileToDelete:           "",
+		windowWidth:            80,
+		windowHeight:           24,
 	}
 }
 
