@@ -2,12 +2,6 @@ package main
 
 import "github.com/charmbracelet/lipgloss"
 
-// Font Configuration
-// Note: Terminal must have JetBrains Mono font installed for best experience
-const (
-	PreferredFont = "JetBrains Mono"
-)
-
 // ASCII Art Options for TERMNOTE Header
 var (
 	asciiArtBox = `
@@ -74,14 +68,11 @@ var (
 
 	SubtitleStyle = lipgloss.NewStyle().
 			Foreground(ColorMuted).
-			Italic(true).
-			Align(lipgloss.Center).
-			MarginBottom(1)
+			Align(lipgloss.Center)
 
 	HelpTitleStyle = lipgloss.NewStyle().
 			Foreground(ColorPrimary).
 			Bold(true).
-			MarginTop(1).
 			MarginBottom(1)
 
 	KeyStyle = lipgloss.NewStyle().
@@ -95,7 +86,6 @@ var (
 			Width(30)
 
 	HelpItemStyle = lipgloss.NewStyle().
-			MarginLeft(4).
 			PaddingLeft(1)
 
 	BoxStyle = lipgloss.NewStyle().
