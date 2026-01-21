@@ -73,28 +73,3 @@ npm run build
 ```
 dist/
 ```
-
-## Customization
-
-### Colors
-
-Edit `tailwind.config.mjs` to customize the color scheme:
-
-```js
-colors: {
-  primary: '#CD5C5C',    // Main accent color
-  secondary: '#AF87FF',  // Secondary accent
-  accent: '#FF87D7',     // Tertiary accent
-}
-```
-
-### Content
-
-- Hero section: `src/components/Hero.astro`
-- Features: `src/components/Features.astro`
-- Installation: `src/components/Installation.astro`
-- Shortcuts: `src/components/Shortcuts.astro`
-
-## License
-
-Same as the main TermNote project.
